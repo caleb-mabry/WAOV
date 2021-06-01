@@ -1,31 +1,17 @@
 <template>
-    <div v-for="server in serverList" :key="server.ip" class="card">
+    <div v-for="server in servers" :key="server.ip" class="card">
       <h1>{{ server.name }}</h1><br />
       {{ server.description }}<br />
       {{ server.ip }}<br />
       {{ server.port }}<br />
-      <router-link @click="selectedServer(server)" :to="{ path: 'server', query: { name: server.name, ip: server.ip, port: server.port, assetUrl: server.assetUrl }}">Join</router-link>
+      <router-link :to="{ path: 'server', query: { name: server.name, ip: server.ip, port: server.port, assetUrl: server.assetUrl }}">Join</router-link>
   </div>
 </template>
 
 <script>
-import { mapState, mapMutations } from 'vuex'
 
 export default {
-    methods: {
-      selectedServer: function(server) {
-
-        this.$store.commit('setSelectedServer', server)
-      }
-    },
-    computed: {
-      ...mapState([
-      'serverList',
-    ]),
-      ...mapMutations([
-        'setSelectedServer'
-      ])
-    }
+  props: ['servers']
 }
 </script>
 

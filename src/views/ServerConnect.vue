@@ -1,9 +1,7 @@
 <template>
   <h1>{{ serverName }}</h1>
-  <div v-for="(character, index) in music" :key="index">
-      <button @click="getMusic(character)">{{character}} </button>
-  </div>
-  <h2>{{assetURL}}</h2>
+  <MusicDisplay :musicList="music" :assetURL="assetURL"/>
+  {{ areas }}
   <div>
     <h1>Current Messages</h1>
     <div v-for="(packet, index) in icMessages" :key="index">
@@ -12,91 +10,108 @@
   </div>
   <div>
     <h1>Available Characters</h1>
-  <div v-for="(character, index) in characters" :key="index">
-    <div v-if="characterStatus[index] != -1">
-      {{character}} 
+    <div v-for="(character, index) in characters" :key="index">
+      <div v-if="characterStatus[index] != -1">
+        {{ character }}
       </div>
-  </div>
+    </div>
   </div>
 </template>
 
 <script>
 import msParser from "../network/ms_parse.js";
 import scParser from "../network/sc_parse.js";
-import charsCheckParser from "../network/chars_check.js"
-import smParser from "../network/sm_parse.js"
+import charsCheckParser from "../network/chars_check.js";
+import smParser from "../network/sm_parse.js";
+
+import MusicDisplay from "../components/musicDisplay";
 
 export default {
   name: "ServerConnect",
+  components: { MusicDisplay },
   data() {
     return {
       serverName: "",
       assetURL: "",
       characters: [],
-      music: [],
+      musicAndAreas: [],
       characterStatus: [],
       icMessages: [],
-      audio: new Audio()
+      charId: -1,
     };
-  },
-  methods: {
-    getMusic: function(name) {
-      if (!this.audio.ended) {
-        this.audio.pause()
-      }
-      this.audio = new Audio(`${this.assetURL}sounds/music/${name.toLowerCase()}`)      
-      this.audio.play()
-    } 
   },
   mounted() {
     let { name, ip, port, assetUrl } = this.$route.query;
     this.serverName = name;
-    this.assetURL = assetUrl
+    this.assetURL = assetUrl;
     port = Number(port);
     port += 1;
     this.item = new WebSocket(`ws://${ip}:${port}`);
 
     let self = this;
-    let count = 0;
-    this.item.onmessage = function (event) {
-      const packet = event.data
-      if (count === 0) {
+    this.item.onopen = function() {
         self.item.send("HI#582d5c62d44e51c0d145466ccfe396a9#%");
         self.item.send("ID#webAO#webAO#%");
-        self.item.send('RC#%')
-        self.item.send('RM#%')
-        self.item.send('RD#%')
+        self.item.send("RC#%");
+        self.item.send("RM#%");
+        self.item.send("RD#%");
+    }
+    this.item.onmessage = function (event) {
+      const packet = event.data;
 
-        count += 1;
-      }
       if (packet.startsWith("MS")) {
         self.icMessages.push(msParser(packet));
+      } else if (packet.startsWith("SC")) {
+        self.characters = scParser(packet);
+      } else if (packet.startsWith("CharsCheck")) {
+        self.characterStatus = charsCheckParser(packet);
+      } else if (packet.startsWith("ASS")) {
+        self.assetURL = packet.split("#")[1];
+      } else if (packet.startsWith("SM")) {
+        self.musicAndAreas = smParser(packet);
+      } else if (packet.startsWith("CHECK")) {
+        self.item.send(`CH#${self.charID}#%`)
       }
-      else if(packet.startsWith("SC")) {
-        self.characters = scParser(packet)
-      }
-      else if (packet.startsWith("CharsCheck")) {
-        self.characterStatus = charsCheckParser(packet)
-      }
-      else if(packet.startsWith("ASS")) {
-        self.assetURL = packet.split('#')[1]
-      }
-      else if(packet.startsWith('SM')) {
-        self.music = smParser(packet)
-      }
-      console.log(packet)
-        
     };
+  },
+  computed: {
+    areas: function () {
+      if (!this.musicAndAreas) {
+        return [];
+      }
+      const startMusicHeader = this.musicAndAreas.filter((item) =>
+        item.includes("=")
+      );
+      if (startMusicHeader) {
+        const copy = this.musicAndAreas.map((item) => String(item));
+        const index = copy.indexOf(startMusicHeader[0]);
+        return this.musicAndAreas.slice(0, index);
+      }
+      return [];
+    },
+    music: function () {
+      if (!this.musicAndAreas) {
+        return [];
+      }
+      const startMusicHeader = this.musicAndAreas.filter((item) =>
+        item.includes("=")
+      );
+      if (startMusicHeader) {
+        const copy = this.musicAndAreas.map((item) => String(item));
+        const index = copy.indexOf(startMusicHeader[0]);
+        return this.musicAndAreas.slice(index);
+      }
+      return [];
+    },
   },
 };
 </script>
 
 <style>
 .t {
-  box-shadow: 
-    12px 12px 16px 0 rgba(0, 0, 0, 0.25),
+  box-shadow: 12px 12px 16px 0 rgba(0, 0, 0, 0.25),
     -8px -8px 12px 0 rgba(255, 255, 255, 0.3);
-      width: 200px;
+  width: 200px;
   height: 200px;
   background-color: yellow;
 }

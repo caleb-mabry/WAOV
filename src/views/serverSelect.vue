@@ -55,7 +55,6 @@ export default {
         const assetUrl = split[4]
         return { name, description, ip, port, assetUrl };
       });
-      this.$store.commit('setServerList', parsed_server_info)
       return parsed_server_info;
     },
   },
