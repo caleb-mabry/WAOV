@@ -1,4 +1,4 @@
-export default function masterServerParser(master_server_packet) {
+export default function masterServerParser(master_server_packet: string) {
     const split_packet = master_server_packet.split('#')
 
     // Remove MS and %

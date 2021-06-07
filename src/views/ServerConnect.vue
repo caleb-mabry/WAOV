@@ -25,10 +25,10 @@
 </template>
 
 <script>
-import msParser from "../network/ms_parse.js";
-import scParser from "../network/sc_parse.js";
-import charsCheckParser from "../network/chars_check.js";
-import smParser from "../network/sm_parse.js";
+import msParser from "../network/ms_parse.ts";
+import scParser from "../network/sc_parse.ts";
+import charsCheckParser from "../network/chars_check.ts";
+import smParser from "../network/sm_parse.ts";
 
 import MusicDisplay from "../components/musicDisplay";
 
