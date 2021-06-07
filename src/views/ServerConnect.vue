@@ -1,18 +1,24 @@
 <template>
   <h1>{{ serverName }}</h1>
-  <MusicDisplay :musicList="music" :assetURL="assetURL"/>
-  {{ areas }}
-  <div>
-    <h1>Current Messages</h1>
-    <div v-for="(packet, index) in icMessages" :key="index">
-      {{ packet.message }}
+  <div id="parent">
+    <div id="top">
+      <div id="characterDisplay"></div>
+      <div id="icMessages">
+        <p v-for="(packet, index) in icMessages" :key="index">
+          {{ packet.message }}
+        </p>
+      </div>
     </div>
-  </div>
-  <div>
-    <h1>Available Characters</h1>
-    <div v-for="(character, index) in characters" :key="index">
-      <div v-if="characterStatus[index] != -1">
-        {{ character }}
+    <div id="bottom">
+      <MusicDisplay :musicList="music" :assetURL="assetURL" />
+      {{ areas }}
+      <div>
+        <h1>Available Characters</h1>
+        <div v-for="(character, index) in characters" :key="index">
+          <div v-if="characterStatus[index] != -1">
+            {{ character }}
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -45,17 +51,17 @@ export default {
     this.serverName = name;
     this.assetURL = assetUrl;
     port = Number(port);
-    port += 1;
+    // port += 1;
     this.item = new WebSocket(`ws://${ip}:${port}`);
 
     let self = this;
-    this.item.onopen = function() {
-        self.item.send("HI#582d5c62d44e51c0d145466ccfe396a9#%");
-        self.item.send("ID#webAO#webAO#%");
-        self.item.send("RC#%");
-        self.item.send("RM#%");
-        self.item.send("RD#%");
-    }
+    this.item.onopen = function () {
+      self.item.send("HI#582d5c62d44e51c0d145466ccfe396a9#%");
+      self.item.send("ID#webAO#webAO#%");
+      self.item.send("RC#%");
+      self.item.send("RM#%");
+      self.item.send("RD#%");
+    };
     this.item.onmessage = function (event) {
       const packet = event.data;
 
@@ -70,7 +76,7 @@ export default {
       } else if (packet.startsWith("SM")) {
         self.musicAndAreas = smParser(packet);
       } else if (packet.startsWith("CHECK")) {
-        self.item.send(`CH#${self.charID}#%`)
+        self.item.send(`CH#${self.charID}#%`);
       }
     };
   },
@@ -108,11 +114,10 @@ export default {
 </script>
 
 <style>
-.t {
-  box-shadow: 12px 12px 16px 0 rgba(0, 0, 0, 0.25),
-    -8px -8px 12px 0 rgba(255, 255, 255, 0.3);
+#icMessages {
   width: 200px;
   height: 200px;
-  background-color: yellow;
+  overflow-x: scroll;
+  background-color: lightblue;
 }
 </style>

@@ -18,9 +18,16 @@ export default {
     };
   },
   beforeMount() {
+
     this.connection = new WebSocket("ws://master.aceattorneyonline.com:27014/");
     
     let self = this;
+        this.connection.onopen = function() {
+        self.connection.send("HI#582d5c62d44e51c0d145466ccfe396a9#%");
+        
+        // If you do not send this on creation, you will get the wrong port 
+        self.connection.send("ID#webAO#webAO#%");
+    }
     this.connection.onmessage = function (event) {
       const packet = event.data
 
