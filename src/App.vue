@@ -5,9 +5,7 @@
 </template>
 
 <script lang="ts">
-import {  Vue } from 'vue-class-component';
-// import HelloWorld from './components/HelloWorld.vue';
-
+import { Vue } from 'vue-class-component';
 export default class App extends Vue {}
 </script>
 

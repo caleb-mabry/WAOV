@@ -10,8 +10,7 @@
       </div>
     </div>
     <div id="bottom">
-      <MusicDisplay :musicList="music" :assetURL="assetURL" />
-      {{ areas }}
+      {{ areas() }}
       <div>
         <h1>Available Characters</h1>
         <div v-for="(character, index) in characters" :key="index">
@@ -24,45 +23,41 @@
   </div>
 </template>
 
-<script>
-import msParser from "../network/ms_parse.ts";
-import scParser from "../network/sc_parse.ts";
-import charsCheckParser from "../network/chars_check.ts";
-import smParser from "../network/sm_parse.ts";
+<script lang="ts">
+import { defineComponent } from "vue";
+// import MusicDisplay from "../components/musicDisplay";
+import msParser from "../network/ms_parse";
+import scParser from "../network/sc_parse";
+import charsCheckParser from "../network/chars_check";
+import smParser from "../network/sm_parse";
 
-import MusicDisplay from "../components/musicDisplay";
-
-export default {
-  name: "ServerConnect",
-  components: { MusicDisplay },
+const ServerConnect = defineComponent({
+  // components: { MusicDisplay },
   data() {
     return {
-      serverName: "",
+      serverName: "" ,
       assetURL: "",
-      characters: [],
-      musicAndAreas: [],
-      characterStatus: [],
-      icMessages: [],
+      characters: [] as Array<String>,
+      musicAndAreas: [] as Array<String>,
+      characterStatus: [] as Array<String>,
+      icMessages: [] as Array<Object>,
       charId: -1,
+      socket: this.connect(),
     };
   },
   mounted() {
-    let { name, ip, port, assetUrl } = this.$route.query;
-    this.serverName = name;
-    this.assetURL = assetUrl;
-    port = Number(port);
-    // port += 1;
-    this.item = new WebSocket(`ws://${ip}:${port}`);
-
+    this.serverName = String(this.$route.query.name);
+    this.assetURL = String(this.$route.query.assetUrl);
     let self = this;
-    this.item.onopen = function () {
-      self.item.send("HI#582d5c62d44e51c0d145466ccfe396a9#%");
-      self.item.send("ID#webAO#webAO#%");
-      self.item.send("RC#%");
-      self.item.send("RM#%");
-      self.item.send("RD#%");
+    this.socket.onopen = function () {
+      self.socket.send("HI#582d5c62d44e51c0d145466ccfe396a9#%");
+      self.socket.send("ID#webAO#webAO#%");
+      self.socket.send("RC#%");
+      self.socket.send("RM#%");
+      self.socket.send("RD#%");
     };
-    this.item.onmessage = function (event) {
+
+    this.socket.onmessage = function (event: { data: string }) {
       const packet = event.data;
 
       if (packet.startsWith("MS")) {
@@ -76,41 +71,46 @@ export default {
       } else if (packet.startsWith("SM")) {
         self.musicAndAreas = smParser(packet);
       } else if (packet.startsWith("CHECK")) {
-        self.item.send(`CH#${self.charID}#%`);
+        self.socket.send(`CH#${self.charId}#%`);
       }
+      console.log(event.data)
     };
   },
-  computed: {
-    areas: function () {
+
+  methods: {
+    connect() {
+      return new WebSocket(
+        `ws://${this.$route.query.ip}:${this.$route.query.port}`
+      );
+    },
+    areas() {
       if (!this.musicAndAreas) {
         return [];
       }
-      const startMusicHeader = this.musicAndAreas.filter((item) =>
+      const startMusicHeader = this.musicAndAreas.filter((item: String) =>
         item.includes("=")
       );
+
       if (startMusicHeader) {
-        const copy = this.musicAndAreas.map((item) => String(item));
-        const index = copy.indexOf(startMusicHeader[0]);
+        const index = this.musicAndAreas.indexOf(startMusicHeader[0]);
         return this.musicAndAreas.slice(0, index);
       }
       return [];
     },
-    music: function () {
+    music(): Array<String> {
       if (!this.musicAndAreas) {
         return [];
       }
-      const startMusicHeader = this.musicAndAreas.filter((item) =>
-        item.includes("=")
-      );
+      const startMusicHeader = this.musicAndAreas.filter(item => item.includes("="));
       if (startMusicHeader) {
-        const copy = this.musicAndAreas.map((item) => String(item));
-        const index = copy.indexOf(startMusicHeader[0]);
+        const index = this.musicAndAreas.indexOf(startMusicHeader[0]);
         return this.musicAndAreas.slice(index);
       }
       return [];
     },
-  },
-};
+  }
+});
+export default ServerConnect;
 </script>
 
 <style>
