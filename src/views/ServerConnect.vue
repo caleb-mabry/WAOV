@@ -2,12 +2,26 @@
   <h1>{{ serverName }}</h1>
   <div id="parent">
     <div id="top">
-      <div id="characterDisplay"></div>
+      <div id="characterDisplay">
+        <img :src="getBackgroundUrl()" alt="" />
+        <br>
+        <input type="text" name="icMessage" id="icMessage" placeholder="Say something..." v-model="currentMessage"/>
+      </div>
       <div id="icMessages">
         <p v-for="(packet, index) in icMessages" :key="index">
+          {{packet.character}}: 
           {{ packet.message }}
         </p>
       </div>
+      <div id="backgroundSelect">
+      <label for="backgrounds">Background</label>
+      <br>
+      <select id="backgrounds" v-model="currentBackground">
+        <option v-for="background in backgrounds" :key="background">
+          {{background}}
+        </option>
+    </select> 
+    </div>
     </div>
     <div id="bottom">
       {{ areas() }}
@@ -26,23 +40,28 @@
 <script lang="ts">
 import { defineComponent } from "vue";
 // import MusicDisplay from "../components/musicDisplay";
+import Backgrounds from "../const/backgrounds"
+import MsPacket from "../types/msPacket"
+
 import msParser from "../network/ms_parse";
 import scParser from "../network/sc_parse";
 import charsCheckParser from "../network/chars_check";
 import smParser from "../network/sm_parse";
-
 const ServerConnect = defineComponent({
   // components: { MusicDisplay },
   data() {
     return {
+      currentMessage: "",
       serverName: "" ,
       assetURL: "",
       characters: [] as Array<String>,
       musicAndAreas: [] as Array<String>,
       characterStatus: [] as Array<String>,
-      icMessages: [] as Array<Object>,
+      icMessages: [] as Array<MsPacket>,
       charId: -1,
       socket: this.connect(),
+      currentBackground: "",
+      backgrounds: Backgrounds
     };
   },
   mounted() {
@@ -72,12 +91,17 @@ const ServerConnect = defineComponent({
         self.musicAndAreas = smParser(packet);
       } else if (packet.startsWith("CHECK")) {
         self.socket.send(`CH#${self.charId}#%`);
+      } else if (packet.startsWith("BN")) {
+        self.currentBackground = packet.split('#')[1]
       }
       console.log(event.data)
     };
   },
 
   methods: {
+    getBackgroundUrl() {
+      return `${this.assetURL}background/${this.currentBackground.toLowerCase()}/defenseempty.png`
+    },
     connect() {
       return new WebSocket(
         `ws://${this.$route.query.ip}:${this.$route.query.port}`
@@ -114,10 +138,20 @@ export default ServerConnect;
 </script>
 
 <style>
-#icMessages {
-  width: 200px;
+
+#top {
+  display: flex;
   height: 200px;
-  overflow-x: scroll;
-  background-color: lightblue;
+}
+#icMessages {
+  width: 400px;
+  height: 200px;
+  overflow-y: scroll;
+  overflow-x: hidden;
+  font-weight:bold;
+  text-align: left;
+  padding-left: 5px;
+  background-color: #263444;
+  color: #c1d4eb;
 }
 </style>
